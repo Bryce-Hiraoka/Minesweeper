@@ -11,106 +11,229 @@ from PIL import Image
 # grey is 29 px long
 
 class Box:
-    def __init__(self, x, y, value):
-        self.x = x
-        self.y = y
+    def __init__(self, board_x, board_y, pixel_x, pixel_y, value):
+        self.board_x = board_x
+        self.board_y = board_y
+        self.pixel_x = pixel_x
+        self.pixel_y = pixel_y
         self.value = value
 
-def get_neighbors(x, y):
-    move = 42
+        # center pixel coordinates of box neighbors
+        self.right = pixel_x + 42
+        self.left = pixel_x - 42
+        self.up = pixel_y - 42
+        self.down = pixel_y + 42
+
+        self.neighbors = {}
+
+class One(Box):
+    def __init__(self, board_x, board_y, pixel_x, pixel_y, value):
+
+        super().__init__(board_x, board_y, pixel_x, pixel_y, value)
+
+    def check_complete(self):
+        potential_bombs = 0
+        bomb_coordinates = ()
+        for i in self.neighbors:
+            if isinstance(self.neighbors[i], Box) and self.neighbors[i].value == "unknown":
+                potential_bombs += 1
+                print(self.neighbors[i].board_x, self.neighbors[i].board_y)
+                bomb_coordinates = (self.neighbors[i].pixel_x, self.neighbors[i].pixel_y)
+            
+            if potential_bombs > 1:
+                return False
+        
+        if potential_bombs != 1:
+            return False
+        else:
+            return bomb_coordinates
+        
+        
+# checks if the current box's neighbors are known or unknown
+def neighbor_check(neighbors, current_box):
+    inc = 20
+
+    if "right" in neighbors and check_grey(neighbors["right"]):
+        color = pyautogui.screenshot(region=(current_box.pixel_x + inc , current_box.pixel_y, 1, 1)).getcolors()[0][1][0]
+        if color == 255:
+            value = "unknown"
+        else:
+            value = 0
+        neighbors["right"] = Box(current_box.board_x + 1, current_box.board_y, current_box.right, current_box.pixel_y, value)
+
+    if "left" in neighbors and check_grey(neighbors["left"]):
+        color = pyautogui.screenshot(region=(current_box.pixel_x - inc , current_box.pixel_y, 1, 1)).getcolors()[0][1][0]
+        if color == 255:
+            value = "unknown"
+        else:
+            value = 0
+        neighbors["left"] = Box(current_box.board_x - 1, current_box.board_y, current_box.left, current_box.pixel_y, value)
+
+    if "up" in neighbors and check_grey(neighbors["up"]):
+        color = pyautogui.screenshot(region=(current_box.pixel_x, current_box.pixel_y - inc, 1, 1)).getcolors()[0][1][0]
+        if color == 255:
+            value = "unknown"
+        else:
+            value = 0
+        neighbors["up"] = Box(current_box.board_x, current_box.board_y - 1, current_box.pixel_x, current_box.up, value)
+
+    if "down" in neighbors and check_grey(neighbors["down"]):
+        color = pyautogui.screenshot(region=(current_box.pixel_x, current_box.pixel_y + inc, 1, 1)).getcolors()[0][1][0]
+        if color == 255:
+            value = "unknown"
+        else:
+            value = 0
+        neighbors["down"] = Box(current_box.board_x, current_box.board_y + 1, current_box.pixel_x, current_box.down, value)
+
+    if "rightup" in neighbors and check_grey(neighbors["rightup"]):
+        color = pyautogui.screenshot(region=(current_box.pixel_x + inc , current_box.pixel_y - inc, 1, 1)).getcolors()[0][1][0]
+        if color == 255:
+            value = "unknown"
+        else:
+            value = 0
+        neighbors["rightup"] = Box(current_box.board_x + 1, current_box.board_y - 1, current_box.right, current_box.up, value)
+
+    if "rightdown" in neighbors and check_grey(neighbors["rightdown"]):
+        color = pyautogui.screenshot(region=(current_box.pixel_x + inc , current_box.pixel_y + inc, 1, 1)).getcolors()[0][1][0]
+        print(color)
+        if color == 255:
+            value = "unknown"
+        else:
+            value = 0
+        neighbors["rightdown"] = Box(current_box.board_x + 1, current_box.board_y + 1 , current_box.right, current_box.down, value)
+          
+    if "leftup" in neighbors and check_grey(neighbors["leftup"]):
+        color = pyautogui.screenshot(region=(current_box.pixel_x - inc , current_box.pixel_y - inc, 1, 1)).getcolors()[0][1][0]
+        if color == 255:
+            value = "unknown"
+        else:
+            value = 0
+        neighbors["leftup"] = Box(current_box.board_x - 1, current_box.board_y - 1, current_box.left, current_box.up, value)
+
+    if "leftdown" in neighbors and check_grey(neighbors["leftdown"]):
+        color = pyautogui.screenshot(region=(current_box.pixel_x - inc , current_box.pixel_y + inc, 1, 1)).getcolors()[0][1][0]
+        if color == 255:
+            value = "unknown"
+        else:
+            value = 0
+        neighbors["leftdown"] = Box(current_box.board_x - 1, current_box.board_y + 1, current_box.left, current_box.down, value)
+
+    return neighbors
+
+# checks if a box is unknown or nothing based on pixel color of corner
+def check_grey(color):
+    if color[0] == 198:
+        return True
+    
+    return False
+
+
+# gets center pixel of touching boxes and stores in dictionary with rgb values
+def get_neighbors(box):
+    neighbors = {}
 
     # Middle blocks
-    if x[0] > 1 and x[0] < 9 and y[0] > 1 and y[0] < 9:
-        r = pyautogui.screenshot(region=(x[1] + move , y[1], 1, 1)).getcolors()[0][1][0]
-        l = pyautogui.screenshot(region=(x[1] - move , y[1], 1, 1)).getcolors()[0][1][0]
-        u = pyautogui.screenshot(region=(x[1], y[1] - move, 1, 1)).getcolors()[0][1][0]
-        d = pyautogui.screenshot(region=(x[1], y[1] + move, 1, 1)).getcolors()[0][1][0]
-        ru = pyautogui.screenshot(region=(x[1] + move , y[1] - move, 1, 1)).getcolors()[0][1][0]
-        rd = pyautogui.screenshot(region=(x[1] + move , y[1] + move, 1, 1)).getcolors()[0][1][0]
-        lu = pyautogui.screenshot(region=(x[1] - move , y[1] - move, 1, 1)).getcolors()[0][1][0]
-        ld = pyautogui.screenshot(region=(x[1] - move , y[1] + move, 1, 1)).getcolors()[0][1][0]
+    if box.board_x > 1 and box.board_x < 9 and box.board_y > 1 and box.board_y < 9:
+        neighbors["right"] = pyautogui.screenshot(region=(box.right, box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["left"] = pyautogui.screenshot(region=(box.left , box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["up"] = pyautogui.screenshot(region=(box.pixel_x, box.up, 1, 1)).getcolors()[0][1]
+        neighbors["down"] = pyautogui.screenshot(region=(box.pixel_x, box.down, 1, 1)).getcolors()[0][1]
+        neighbors["rightup"] = pyautogui.screenshot(region=(box.right , box.up, 1, 1)).getcolors()[0][1]
+        neighbors["rightdown"] = pyautogui.screenshot(region=(box.right, box.down, 1, 1)).getcolors()[0][1]
+        neighbors["leftup"] = pyautogui.screenshot(region=(box.left, box.up, 1, 1)).getcolors()[0][1]
+        neighbors["leftdown"] = pyautogui.screenshot(region=(box.left, box.down, 1, 1)).getcolors()[0][1]
 
-        return [r, l, u, d, ru, rd, lu, ld]
-    
+        new_neighbors = neighbor_check(neighbors, box)
+        return (new_neighbors)
+
     # top row
-    elif x[0] > 1 and x[0] < 9 and y[0] == 1:
-        r = pyautogui.screenshot(region=(x[1] + move , y[1], 1, 1)).getcolors()[0][1][0]
-        l = pyautogui.screenshot(region=(x[1] - move , y[1], 1, 1)).getcolors()[0][1][0]
-        d = pyautogui.screenshot(region=(x[1], y[1] + move, 1, 1)).getcolors()[0][1][0]
-        rd = pyautogui.screenshot(region=(x[1] + move , y[1] + move, 1, 1)).getcolors()[0][1][0]
-        ld = pyautogui.screenshot(region=(x[1] - move , y[1] + move, 1, 1)).getcolors()[0][1][0]
+    elif box.board_x > 1 and box.board_x < 9 and box.board_y == 1:
+        neighbors["right"] = pyautogui.screenshot(region=(box.right, box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["left"] = pyautogui.screenshot(region=(box.left , box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["down"] = pyautogui.screenshot(region=(box.pixel_x, box.down, 1, 1)).getcolors()[0][1]
+        neighbors["rightdown"] = pyautogui.screenshot(region=(box.right, box.down, 1, 1)).getcolors()[0][1]
+        neighbors["leftdown"] = pyautogui.screenshot(region=(box.left, box.down, 1, 1)).getcolors()[0][1]
 
-        return [r, l, d, rd, ld]
+        new_neighbors = neighbor_check(neighbors, box)
+        return (new_neighbors)
 
     # bottom row
-    elif x[0] > 1 and x[0] < 9 and y[0] == 9:
-        r = pyautogui.screenshot(region=(x[1] + move , y[1], 1, 1)).getcolors()[0][1][0]
-        l = pyautogui.screenshot(region=(x[1] - move , y[1], 1, 1)).getcolors()[0][1][0]
-        u = pyautogui.screenshot(region=(x[1], y[1] - move, 1, 1)).getcolors()[0][1][0]
-        ru = pyautogui.screenshot(region=(x[1] + move , y[1] - move, 1, 1)).getcolors()[0][1][0]
-        lu = pyautogui.screenshot(region=(x[1] - move , y[1] - move, 1, 1)).getcolors()[0][1][0]
+    elif box.board_x > 1 and box.board_x < 9 and box.board_y == 9:
+        neighbors["right"] = pyautogui.screenshot(region=(box.right, box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["left"] = pyautogui.screenshot(region=(box.left , box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["up"] = pyautogui.screenshot(region=(box.pixel_x, box.up, 1, 1)).getcolors()[0][1]
+        neighbors["rightup"] = pyautogui.screenshot(region=(box.right , box.up, 1, 1)).getcolors()[0][1]
+        neighbors["leftup"] = pyautogui.screenshot(region=(box.left, box.up, 1, 1)).getcolors()[0][1]
 
-        return [r, l, u, ru]
+        new_neighbors = neighbor_check(neighbors, box)
+        return (new_neighbors)
     
     # left row
-    elif x[0] == 1 and y[0] > 1 and y[0] < 9:
-        l = pyautogui.screenshot(region=(x[1] - move , y[1], 1, 1)).getcolors()[0][1][0]
-        u = pyautogui.screenshot(region=(x[1], y[1] - move, 1, 1)).getcolors()[0][1][0]
-        d = pyautogui.screenshot(region=(x[1], y[1] + move, 1, 1)).getcolors()[0][1][0]
-        lu = pyautogui.screenshot(region=(x[1] - move , y[1] - move, 1, 1)).getcolors()[0][1][0]
-        ld = pyautogui.screenshot(region=(x[1] - move , y[1] + move, 1, 1)).getcolors()[0][1][0]
+    elif box.board_x == 9 and box.board_y > 1 and box.board_y < 9:
+        neighbors["left"] = pyautogui.screenshot(region=(box.left , box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["up"] = pyautogui.screenshot(region=(box.pixel_x, box.up, 1, 1)).getcolors()[0][1]
+        neighbors["down"] = pyautogui.screenshot(region=(box.pixel_x, box.down, 1, 1)).getcolors()[0][1]
+        neighbors["leftup"] = pyautogui.screenshot(region=(box.left, box.up, 1, 1)).getcolors()[0][1]
+        neighbors["leftdown"] = pyautogui.screenshot(region=(box.left, box.down, 1, 1)).getcolors()[0][1]
 
-        return [l, u, d, lu, ld]
+        new_neighbors = neighbor_check(neighbors, box)
+        return (new_neighbors)
 
     # right row
-    elif x[0] == 9 and y[0] > 1 and y[0] < 9:
-        r = pyautogui.screenshot(region=(x[1] + move , y[1], 1, 1)).getcolors()[0][1][0]
-        u = pyautogui.screenshot(region=(x[1], y[1] - move, 1, 1)).getcolors()[0][1][0]
-        d = pyautogui.screenshot(region=(x[1], y[1] + move, 1, 1)).getcolors()[0][1][0]
-        ru = pyautogui.screenshot(region=(x[1] + move , y[1] - move, 1, 1)).getcolors()[0][1][0]
-        rd = pyautogui.screenshot(region=(x[1] + move , y[1] + move, 1, 1)).getcolors()[0][1][0]
+    elif box.board_x == 1 and box.board_y > 1 and box.board_y < 9:
+        neighbors["right"] = pyautogui.screenshot(region=(box.right, box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["up"] = pyautogui.screenshot(region=(box.pixel_x, box.up, 1, 1)).getcolors()[0][1]
+        neighbors["down"] = pyautogui.screenshot(region=(box.pixel_x, box.down, 1, 1)).getcolors()[0][1]
+        neighbors["rightup"] = pyautogui.screenshot(region=(box.right , box.up, 1, 1)).getcolors()[0][1]
+        neighbors["rightdown"] = pyautogui.screenshot(region=(box.right, box.down, 1, 1)).getcolors()[0][1]
 
-        return [r, u, d, ru, rd]
+        new_neighbors = neighbor_check(neighbors, box)
+        return (new_neighbors)
 
     # top left
-    elif x[0] == 1 and y[0] == 1:
-        r = pyautogui.screenshot(region=(x[1] + move , y[1], 1, 1)).getcolors()[0][1][0]
-        d = pyautogui.screenshot(region=(x[1], y[1] + move, 1, 1)).getcolors()[0][1][0]
-        rd = pyautogui.screenshot(region=(x[1] + move , y[1] + move, 1, 1)).getcolors()[0][1][0]
+    elif box.board_x == 1 and box.board_y == 1:
+        neighbors["right"] = pyautogui.screenshot(region=(box.right, box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["down"] = pyautogui.screenshot(region=(box.pixel_x, box.down, 1, 1)).getcolors()[0][1]
+        neighbors["rightdown"] = pyautogui.screenshot(region=(box.right, box.down, 1, 1)).getcolors()[0][1]
 
-        return [r, d, rd]
+        new_neighbors = neighbor_check(neighbors, box)
+        return (new_neighbors)
      
     # top right
-    elif x[0] == 1 and y[0] == 1:
-        l = pyautogui.screenshot(region=(x[1] - move , y[1], 1, 1)).getcolors()[0][1][0]
-        d = pyautogui.screenshot(region=(x[1], y[1] + move, 1, 1)).getcolors()[0][1][0]
-        ld = pyautogui.screenshot(region=(x[1] - move , y[1] + move, 1, 1)).getcolors()[0][1][0]
-        
-        return [l, d, ld]
+    elif box.board_x == 1 and box.board_y == 1:
+        neighbors["left"] = pyautogui.screenshot(region=(box.left , box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["down"] = pyautogui.screenshot(region=(box.pixel_x, box.down, 1, 1)).getcolors()[0][1]
+        neighbors["leftdown"] = pyautogui.screenshot(region=(box.left, box.down, 1, 1)).getcolors()[0][1]
+
+        new_neighbors = neighbor_check(neighbors, box)
+        return(new_neighbors)
 
     # bottom left
-    elif x[0] == 1 and y[0] == 1:
-        r = pyautogui.screenshot(region=(x[1] + move , y[1], 1, 1)).getcolors()[0][1][0]
-        u = pyautogui.screenshot(region=(x[1], y[1] - move, 1, 1)).getcolors()[0][1][0]
-        ru = pyautogui.screenshot(region=(x[1] + move , y[1] - move, 1, 1)).getcolors()[0][1][0]
+    elif box.board_x == 1 and box.board_y == 1:
+        neighbors["right"] = pyautogui.screenshot(region=(box.right, box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["up"] = pyautogui.screenshot(region=(box.pixel_x, box.up, 1, 1)).getcolors()[0][1]
+        neighbors["rightup"] = pyautogui.screenshot(region=(box.right , box.up, 1, 1)).getcolors()[0][1]
 
-        return [r, u, ru]
+        new_neighbors = neighbor_check(neighbors, box)
+        return (new_neighbors)
 
     # bottom right
-    elif x[0] == 1 and y[0] == 1:
-        l = pyautogui.screenshot(region=(x[1] - move , y[1], 1, 1)).getcolors()[0][1][0]
-        u = pyautogui.screenshot(region=(x[1], y[1] - move, 1, 1)).getcolors()[0][1][0]
-        lu = pyautogui.screenshot(region=(x[1] - move , y[1] - move, 1, 1)).getcolors()[0][1][0]
+    elif box.board_x == 1 and box.board_y == 1:
+        neighbors["left"] = pyautogui.screenshot(region=(box.left , box.pixel_y, 1, 1)).getcolors()[0][1]
+        neighbors["up"] = pyautogui.screenshot(region=(box.pixel_x, box.up, 1, 1)).getcolors()[0][1]
+        neighbors["leftup"] = pyautogui.screenshot(region=(box.left, box.up, 1, 1)).getcolors()[0][1]
 
-        return [l, u, lu]
+        new_neighbors = neighbor_check(neighbors, box)
+        return (new_neighbors)
 
 
 board = [['' for i in range(9)] for i in range(9)]
 
-#print(board)
+# finds all '1' boxes on screen and saves them as coordinates
+ones = list(pyautogui.locateAllOnScreen('States/one.png'))
 
-ones = list(pyautogui.locateAllOnScreen('one.png'))
-
+# uses the coordinates of picture to determine which box each '1' is in
+# stores x y corrdinates as a tuple (board coordinate, pixel coordinate)
 for coors in ones:
     x = coors[0]
 
@@ -132,7 +255,6 @@ for coors in ones:
         x = (8,1053)
     else:
         x = (9,1137)
-    
 
     y = coors[1]
 
@@ -155,6 +277,15 @@ for coors in ones:
     else:
         y = (9,861)
 
-    neighbors = get_neighbors(x, y)
-    print(x, y, neighbors)
+    # change get neighbors later to be hidden
+    current_one = One(x[0], y[0], x[1], y[1], 1)
+    current_one.neighbors = get_neighbors(current_one)
+
+    if coor := current_one.check_complete():
+        pyautogui.click(x=coor[0], y=coor[1], button='right')
+    
+
+
+        
+
     
