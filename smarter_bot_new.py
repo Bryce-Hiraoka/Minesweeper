@@ -17,13 +17,11 @@ import time
 # Check if game has been won
 # Maybe hide neighbor call altogether
 
-# x = 782 - 820, 824 - 862 , 866 - 904, 908 - 946, 950 - 988, 992 - 1030, 1034 - 1072, 1076 - 1114, 1118 - 1156
-# y = 506 - 544, 548 - 586, 590 - 628, 632 - 670, 674 - 712, 716 - 754, 758 - 796, 800 - 838, 842 - 880 
+# x = 1007 - 1041, 1042 - 1076, 1077 - 1111, 1112 - 1146, 1147 - 1181, 1182 - 1216, 1217 - 1251, 1252 - 1286
+# y = 677 - 711, 712 - 746, 747 - 781, 782 - 816, 817 - 851, 852 - 886, 887 - 921, 922 - 956
 
-# middle x = 801, 843, 885, 927, 969, 1011, 1053, 1095, 1137
-# middle y = 525, 567, 609, 651, 693, 735, 777, 819, 861
-
-# grey is 29 px long
+# middle x = 1024, 1059, 1094, 1129, 1164, 1199, 1234, 1269
+# middle y = 694, 729, 764, 799, 834, 869, 904, 939
 
 # class that represents all boxes on the board
 class Box:
@@ -37,10 +35,10 @@ class Box:
         self.value = value
 
         # center pixel coordinates of box neighbors
-        self.right = pixel_x + 42
-        self.left = pixel_x - 42
-        self.up = pixel_y - 42
-        self.down = pixel_y + 42
+        self.right = pixel_x + 35
+        self.left = pixel_x - 35
+        self.up = pixel_y - 35
+        self.down = pixel_y + 35
 
         # stores boxes neighbors
         self.neighbors = {}
@@ -239,173 +237,80 @@ def get_neighbors(curr_box):
 
 # board = [['' for i in range(9)] for i in range(9)]
 
-num_attempts = 0
-num_wins = 1
-num_loses = 1
-win_time = 0
-loss_time = 0
-
-while True:
-    start_time = time.time()
-    reset = False
-
-    if num_attempts == 1:
-            break
-    
-    pyautogui.click(x=800, y=315)
-    pyautogui.click(x=801, y=522)
-    pyautogui.click(x=1134, y=522)
-    pyautogui.click(x=800, y=850)
-    pyautogui.click(x=1130, y=850)
-
-    while True:
-        if reset:
-            break
-
-        progress = False
-    
-
-        for i in [1, 2, 3]:
-            if i == 1:
-                # finds all '1' boxes on screen and saves them as coordinates
-                try:
-                    number = list(pyautogui.locateAllOnScreen('States/one.png'))
-                except:
-                    continue
-            elif i == 2:
-                # finds all '2' boxes on screen and saves them as coordinates
-                try:
-                    number = list(pyautogui.locateAllOnScreen('States/two.png'))
-                except:
-                    continue
-            elif i == 3:
-                # finds all '3' boxes on screen and saves them as coordinates
-                try:
-                    number = list(pyautogui.locateAllOnScreen('States/three.png'))
-                except:
-                    continue
-
-            # uses the coordinates of picture to determine which curr_box each '1' is in
-            # stores x y corrdinates as a tuple (board coordinate, pixel coordinate)
-            for coors in number:
-                x = coors[0]
-
-                if x < 820:
-                    x = (1, 801)
-                elif x < 862:
-                    x = (2, 843)
-                elif x < 904:
-                    x = (3,885)
-                elif x < 946:
-                    x = (4,927)
-                elif x < 988:
-                    x = (5,969)
-                elif x < 1030:
-                    x = (6,1011)
-                elif x < 1072:
-                    x = (7,1053)
-                elif x < 1114:
-                    x = (8,1095)
-                else:
-                    x = (9,1137)
-
-                y = coors[1]
-
-                if y < 544:
-                    y = (1,525)
-                elif y < 586:
-                    y = (2,567)
-                elif y < 628:
-                    y = (3,609)
-                elif y < 670:
-                    y = (4,651)
-                elif y < 712:
-                    y = (5,693)
-                elif y < 754:
-                    y = (6,735)
-                elif y < 796:
-                    y = (7,777)
-                elif y < 838:
-                    y = (8,819)
-                else:
-                    y = (9,861)
-
-                # change to have the boxes store thier number value so no need if else statements
-                if i == 1:
-                    current = One(x[0], y[0], x[1], y[1], 1)
-                elif i == 2:
-                    current = Two(x[0], y[0], x[1], y[1], 1)
-                else:
-                    current = Three(x[0], y[0], x[1], y[1], 1)
-
-                #print("Board Coordinates", current.board_x, current.board_y, "Pixel Coordinates", current.pixel_x, current.pixel_y)
-                current.neighbors = get_neighbors(current)
-                
-                '''
-                for i in current_one.neighbors:
-                    print(i, current_one.neighbors[i].value)
-                '''
-
-                #print(current.neighbors)
-                bomb_neighbor, pot_bombs, num_bombs = current.check_complete()
-
-                if bomb_neighbor:
-                    for coor in pot_bombs:
-                        #print('left click', coor[0], coor[1])
-                        pyautogui.click(x=coor[0], y=coor[1], button='left')
-                        progress = True
-                elif len(pot_bombs) + num_bombs == i:
-                    #print("right click", pot_bombs[0][0], pot_bombs[0][1])
-                    for bomb in pot_bombs:
-                        pyautogui.click(x=bomb[0], y=bomb[1], button='right')
-                        progress = True
-
-            # pyautogui to screenshot specific pixel to determine state of game (loss, win, neutral)
-            pixel = pyautogui.screenshot(region=(958,423, 1, 1)).getcolors()[0][1][0]
-        
-            # check for game loss
-            if pixel == 53:
-                num_attempts += 1 
-                print("game loss")
-                reset = True
-                num_loses += 1
-                loss_time += time.time() - start_time
-                break
-
-            
-            # check for game win
-            if pixel == 181:
-                num_attempts += 1 
-                print("game win")
-                reset = True
-                win_time += time.time() - start_time
-                num_wins += 1
-                break
-
-                
-        # if stuck click a random coordinate
-        # will change later to be better
-        if not progress:
-            rand_X = random.randint(780, 1150)
-            rand_Y = random.randint(510, 870)
-            # click at random coordinate
-            pyautogui.click(x=rand_X, y=rand_Y, button='left')
-
-wr = num_wins / num_attempts
-wt_min = (win_time / num_wins) // 60
-wt_sec = (win_time / num_wins) % 60
-
-lt_min = (loss_time / num_loses) // 60
-lt_sec = (loss_time / num_loses) % 60
+pyautogui.click(x=1024, y=677)
+pyautogui.click(x=1024, y=939)
+pyautogui.click(x=1269, y=677)
+pyautogui.click(x=1269, y=939)
 
 
-with open ("results.txt", "w") as file:
-    file.write(f"Total games played: {num_attempts} \n")
-    file.write(f"Games won: {num_wins} \n")
-    file.write(f"Winrate: {wr}% \n")
-    file.write(f"Avg, win time: {wt_min} min. {wt_sec} sec. \n")
-    file.write(f"Games lost: {num_loses} \n")
-    file.write(f"Avg. lose time: {lt_min} min. {lt_sec} sec. \n")
+for i in [1, 2, 3]:
+    if i == 1:
+        # finds all '1' boxes on screen and saves them as coordinates
+        try:
+            number = list(pyautogui.locateAllOnScreen('States/one.png'))
+        except:
+            continue
+    elif i == 2:
+        # finds all '2' boxes on screen and saves them as coordinates
+        try:
+            number = list(pyautogui.locateAllOnScreen('States/two.png'))
+        except:
+            continue
+    elif i == 3:
+        # finds all '3' boxes on screen and saves them as coordinates
+        try:
+            number = list(pyautogui.locateAllOnScreen('States/three.png'))
+        except:
+            continue
+
+    for coors in number:
+        x = coors[0]
+
+        if x < 1041:
+            x = (1, 1024)
+        elif x < 1076:
+            x = (2, 1059)
+        elif x < 1111:
+            x = (3, 1094)
+        elif x < 1146:
+            x = (4, 1129)
+        elif x < 1181:
+            x = (5, 1164)
+        elif x < 1216:
+            x = (6, 1164)
+        elif x < 1251:
+            x = (7, 1234)
+        else:
+            x = (8, 1269)
+
+        y = coors[1]
+
+        if y < 711:
+            y = (1, 694)
+        elif y < 746:
+            y = (2, 729)
+        elif y < 781:
+            y = (3, 764)
+        elif y < 816:
+            y = (4, 799)
+        elif y < 851:
+            y = (5, 834)
+        elif y < 886:
+            y = (6, 869)
+        elif y < 921:
+            y = (7, 904)
+        else:
+            y = (8, 939)
+
+        if i == 1:
+            current = One(x[0], y[0], x[1], y[1], 1)
+        elif i == 2:
+            current = Two(x[0], y[0], x[1], y[1], 1)
+        else:
+            current = Three(x[0], y[0], x[1], y[1], 1)
+
+        current.neighbors = get_neighbors(current)
+
 
 
                
