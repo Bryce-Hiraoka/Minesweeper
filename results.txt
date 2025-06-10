@@ -1,0 +1,5 @@
+Total games played: 1 
+Games won: 2 
+Winrate: 2.0 
+Avg, win time: 0.0 min. 27.82242262363434 sec. 
+Games lost: 1Avg. lose time: 0.0 min. 0.0 sec. 
