@@ -1,4 +1,8 @@
+# 1265, 342
+
 import subprocess
+import pyautogui
+
 
 files = ["one.py", "two.py", "three.py"]
 
@@ -8,3 +12,5 @@ for i in range(5):
     for file in files:
         print(f"Running {file}...")
         subprocess.run(["python", file])
+        check = pyautogui.screenshot(region=(1265, 342, 1, 1)).getcolors()[0][1]
+        print(check)
