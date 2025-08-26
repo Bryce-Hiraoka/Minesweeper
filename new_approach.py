@@ -20,10 +20,15 @@ import time
 # x = 1007 - 1041, 1042 - 1076, 1077 - 1111, 1112 - 1146, 1147 - 1181, 1182 - 1216, 1217 - 1251, 1252 - 1286
 # y = 677 - 711, 712 - 746, 747 - 781, 782 - 816, 817 - 851, 852 - 886, 887 - 921, 922 - 956
 
-# middle x = 1024, 1059, 1094, 1129, 1164, 1199, 1234, 1269
-# middle y = 694, 729, 764, 799, 834, 869, 904, 939
+# middle x = 1055, 1119, 1183, 1247, 1311, 1375, 1439, 1503
+# middle y = 471, 535, 599, 663, 727, 791, 855, 919
 
 # class that represents all boxes on the board
+
+x_coordinates = [1055, 1119, 1183, 1247, 1311, 1375, 1439, 1503]
+y_coordinates = [471, 535, 599, 663, 727, 791, 855, 919]
+pxl_to_edg = 32
+
 class Box:
     def __init__(self, board_x, board_y, pixel_x, pixel_y, value):
 
@@ -35,10 +40,10 @@ class Box:
         self.value = value
 
         # center pixel coordinates of box neighbors
-        self.right = pixel_x + 35
-        self.left = pixel_x - 35
-        self.up = pixel_y - 35
-        self.down = pixel_y + 35
+        self.right = pixel_x + 64
+        self.left = pixel_x - 64
+        self.up = pixel_y - 64
+        self.down = pixel_y + 64
 
         # stores boxes neighbors
         self.neighbors = {}
@@ -130,22 +135,26 @@ def check_grey(color):
 
 # checks to see if a box is a flagged bomb or not
 def check_bomb(color):
-    if color[0] == 0 and color[1] == 0 and color[2] == 0:
+    if color[0] == 5 and color[1] == 5 and color[2] == 5:
         return True
-    
     return False
 
 def get_value(x, y):
     value = ""
-    pixel = pyautogui.screenshot(region=(x, y + 2, 1, 1)).getcolors()[0][1]
-    if pixel[0] == 189:
-        color = pyautogui.screenshot(region=(x , y - 15, 1, 1)).getcolors()[0][1][0]
+    color_neigh_center = pyautogui.screenshot(region=(x, y, 1, 1)).getcolors()[0][1]
+    print(color_neigh_center, "pixel color")
+    if color_neigh_center[0] == 189:
+        color = pyautogui.screenshot(region=(x, y - 27, 1, 1)).getcolors()[0][1][0]
         if color == 255:
             value = "unknown"
         else:
             value = 0
-    elif check_bomb(pixel):
-        value = "bomb"
+    elif color_neigh_center[2] == 255:
+        color = pyautogui.screenshot(region=(x, y - 15, 1, 1)).getcolors()[0][1]
+        print(color, "bomb color")
+        if check_bomb(color):
+            print("here")
+            value = "bomb"
     else:
         #change this later
         value = "number"
@@ -159,43 +168,51 @@ def set_neighbors(neighbors, curr_box):
     for direction in neighbors:
         match direction:
             case "right":
+                #print("right")
                 value = get_value(curr_box.right, curr_box.pixel_y)
                 res["right"] = Box(curr_box.board_x + 1, curr_box.board_y, curr_box.right, curr_box.pixel_y, value)
 
             case "left":
+                #print("left")                
                 value = get_value(curr_box.left, curr_box.pixel_y)
                 res["left"] = Box(curr_box.board_x - 1, curr_box.board_y, curr_box.left, curr_box.pixel_y, value)
 
             case "up":
+                #print("up")                
                 value = get_value(curr_box.pixel_x, curr_box.up)
                 res["up"] = Box(curr_box.board_x, curr_box.board_y - 1, curr_box.pixel_x, curr_box.up, value)
 
             case "down":
+                #print("down")                                
                 value = get_value(curr_box.pixel_x, curr_box.down)
                 res["down"] = Box(curr_box.board_x, curr_box.board_y + 1, curr_box.pixel_x, curr_box.down, value)
 
             case "rightup":
+                #print("rightup")                
                 value = get_value(curr_box.right, curr_box.up)
                 res["rightup"] = Box(curr_box.board_x + 1, curr_box.board_y - 1, curr_box.right, curr_box.up, value)
 
             case "rightdown":
+                #print("rightdown")                                
                 value = get_value(curr_box.right, curr_box.down)
                 res["rightdown"] = Box(curr_box.board_x + 1, curr_box.board_y + 1, curr_box.right, curr_box.down, value)
 
             case "leftup":
+                #print("leftup")                                
                 value = get_value(curr_box.left, curr_box.up)
                 res["leftup"] = Box(curr_box.board_x - 1, curr_box.board_y - 1, curr_box.left, curr_box.up, value)
 
             case "leftdown":
+                #print("leftdown")                                
                 value = get_value(curr_box.left, curr_box.down)
                 res["leftdown"] = Box(curr_box.board_x - 1, curr_box.board_y + 1, curr_box.left, curr_box.down, value)
 
     return res
 
 
-
 # gets center pixel of touching boxes and stores in dictionary with rgb values
 def get_neighbors(curr_box):
+    print(curr_box.board_x, curr_box.board_y)
     neighbors = {}
 
     # middle blocks
@@ -238,18 +255,15 @@ def get_neighbors(curr_box):
 
 # board = [['' for i in range(9)] for i in range(9)]
 
-pyautogui.click(x=1024, y=677)
-pyautogui.click(x=1024, y=939)
-pyautogui.click(x=1269, y=677)
-pyautogui.click(x=1269, y=939)
+pyautogui.click(x=1057, y=454)
 
 
-for loop in [1, 2, 3]:
+for loop in [1]:
     if loop == 1:
         # finds all '1' boxes on screen and saves them as coordinates
         try:
-            print('1')
-            number = list(pyautogui.locateAllOnScreen('States/one.png'))
+            print('1', "sup")
+            number = list(pyautogui.locateAllOnScreen('States/one.PNG', confidence=0.984))
         except:
             continue
     elif loop == 2:
@@ -257,6 +271,7 @@ for loop in [1, 2, 3]:
         try:
             print('2')
             number = list(pyautogui.locateAllOnScreen('States/two.png'))
+            print(number)
         except:
             continue
     elif loop == 3:
@@ -270,41 +285,41 @@ for loop in [1, 2, 3]:
     for coors in number:
         x = coors[0]
 
-        if x < 1041:
-            x = (1, 1024)
-        elif x < 1076:
-            x = (2, 1059)
-        elif x < 1111:
-            x = (3, 1094)
-        elif x < 1146:
-            x = (4, 1129)
-        elif x < 1181:
-            x = (5, 1199)
-        elif x < 1216:
-            x = (6, 1164)
-        elif x < 1251:
-            x = (7, 1234)
+        if x < x_coordinates[0] + pxl_to_edg:
+            x = (1, x_coordinates[0])
+        elif x < x_coordinates[1] + pxl_to_edg:
+            x = (2, x_coordinates[1])
+        elif x < x_coordinates[2] + pxl_to_edg:
+            x = (3, x_coordinates[2])
+        elif x < x_coordinates[3] + pxl_to_edg:
+            x = (4, x_coordinates[3])
+        elif x < x_coordinates[4] + pxl_to_edg:
+            x = (5, x_coordinates[4])
+        elif x < x_coordinates[5] + pxl_to_edg:
+            x = (6, x_coordinates[5])
+        elif x < x_coordinates[6] + pxl_to_edg:
+            x = (7, x_coordinates[6])
         else:
-            x = (8, 1269)
+            x = (8, x_coordinates[7])
 
         y = coors[1]
 
-        if y < 711:
-            y = (1, 694)
-        elif y < 746:
-            y = (2, 729)
-        elif y < 781:
-            y = (3, 764)
-        elif y < 816:
-            y = (4, 799)
-        elif y < 851:
-            y = (5, 834) 
-        elif y < 886:
-            y = (6, 869)
-        elif y < 921:
-            y = (7, 904)
+        if y < y_coordinates[0] + pxl_to_edg:
+            y = (1, y_coordinates[0])
+        elif y < y_coordinates[1] + pxl_to_edg:
+            y = (2, y_coordinates[1])
+        elif y < y_coordinates[2] + pxl_to_edg:
+            y = (3, y_coordinates[2])
+        elif y < y_coordinates[3] + pxl_to_edg:
+            y = (4, y_coordinates[3])
+        elif y < y_coordinates[4] + pxl_to_edg:
+            y = (5, y_coordinates[4]) 
+        elif y < y_coordinates[5] + pxl_to_edg:
+            y = (6, y_coordinates[5])
+        elif y < y_coordinates[6] + pxl_to_edg:
+            y = (7, y_coordinates[6])
         else:
-            y = (8, 939)    
+            y = (8, y_coordinates[7])    
         
         if loop == 1:
             current = One(x[0], y[0], x[1], y[1], 1)
@@ -315,14 +330,14 @@ for loop in [1, 2, 3]:
         
         current.neighbors = get_neighbors(current)
 
-        print (x, y)
+        #print (x, y)
         for i in current.neighbors:
-            print(i, current.neighbors[i].value)
+            #print(i, current.neighbors[i].value)
                 
 
         bomb_neighbor, pot_bombs, num_bombs = current.check_complete()
 
-        print(bomb_neighbor)
+        #print(bomb_neighbor)
 
         if bomb_neighbor:
             for coor in pot_bombs:
