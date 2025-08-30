@@ -24,6 +24,9 @@ import time
 # middle y = 471, 535, 599, 663, 727, 791, 855, 919
 
 # class that represents all boxes on the board
+# 33 down, 32 up
+# 33 right, 32 left
+
 
 x_coordinates = [1055, 1119, 1183, 1247, 1311, 1375, 1439, 1503]
 y_coordinates = [471, 535, 599, 663, 727, 791, 855, 919]
@@ -47,6 +50,8 @@ class Box:
 
         # stores boxes neighbors
         self.neighbors = {}
+
+        
 
 # class for boxes where known value is 1
 class One(Box):

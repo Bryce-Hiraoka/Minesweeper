@@ -1,4 +1,5 @@
-import pyautogui
+import sys
+from vision import screenshot, locate, click
 
 #bomb = 178,66,66
 #3 = 246,23,23
@@ -101,17 +102,21 @@ class Board:
                 elif value == "B":
                     bomb_neighbor += 1
                 self.update_square(y - 1, x - 1, value)
-        if len(bomb) + bomb_neighbor == 2 and bomb_neighbor < 2:
+
+        if len(bomb) + bomb_neighbor == box.value and bomb_neighbor < box.value:
+            self.update_square(box.y - 1, box.x - 1, "solved")
             for pot in bomb:
                 print(pot)
                 self.update_square(pot[1] - 1, pot[0] - 1, 'B')
-                pyautogui.click(x=middle_x[pot[0]], y=middle_y[pot[1]], button='right')
+                click(pot[0], pot[1], 'right')
                 print("bomb at", pot[0], pot[1])
+
         
-        if bomb_neighbor == 2:
+        if bomb_neighbor == box.value:
+            self.update_square(box.y - 1, box.x - 1, "solved")
             bomb_click(bomb)
         
-
+      
 
 # Specifies where on the board the given coordinate is        
 def get_type(x, y):
@@ -138,10 +143,10 @@ def get_type(x, y):
 
 def get_value(x, y):
     value = ""
-    color_neigh_center = pyautogui.screenshot(region=(x, y + 3, 1, 1)).getcolors()[0][1]
+    color_neigh_center = screenshot(x, y + 3)
     #print(color_neigh_center)
     if color_neigh_center[0] == 189:
-        color = pyautogui.screenshot(region=(x, y - 27, 1, 1)).getcolors()[0][1][0]
+        color = screenshot(x, y - 27)[0]
         if color == 255:
             value = "U"
         else:
@@ -153,6 +158,8 @@ def get_value(x, y):
             value = 1
         elif color_neigh_center[1] == 123:
             value = 2
+        elif color_neigh_center[2] == 123:
+            value = 4
         else:
             value = 3
     
@@ -160,65 +167,116 @@ def get_value(x, y):
 
 def bomb_click(neighbor_coords):
     for x, y in neighbor_coords:
-        pyautogui.click(x=middle_x[x], y=middle_y[y], button="left")
+        click(x, y, "left")
+
+
 
 tester = Board()
-#number = list(pyautogui.locateAllOnScreen('States/one.PNG', confidence=0.984))
-number = list(pyautogui.locateAllOnScreen('States/two.PNG', confidence=0.984))
-#number = list(pyautogui.locateAllOnScreen('States/three.PNG', confidence=0.930))
+click(1, 1, 'left')
+click(1, 8, 'left')
+click(8, 1, 'left')
+click(8, 8, 'left')
+
+for _ in range(15):
+    for loop in [1, 2, 3, 4]:
+        if loop == 1:
+            # finds all '1' boxes on screen and saves them as coordinates
+            try:
+                print('1')
+                number = locate('one.PNG')
+            except:
+                continue
+        elif loop == 2:
+            # finds all '2' boxes on screen and saves them as coordinates
+            try:
+                print('2')
+                number = locate('two.PNG')
+            except:
+                continue
+        elif loop == 3:
+            # finds all '3' boxes on screen and saves them as coordinates
+            try:
+                print('3')
+                number = locate('three.PNG')
+            except:
+                continue
+        elif loop == 4:
+            # finds all '4' boxes on screen and saves them as coordinates
+            try:
+                print('4')
+                number = locate('four.PNG')
+            except:
+                continue
 
 
-x_coordinates = [1055, 1119, 1183, 1247, 1311, 1375, 1439, 1503]
-y_coordinates = [471, 535, 599, 663, 727, 791, 855, 919]
-pxl_to_edg = 32
+
+        x_coordinates = [1055, 1119, 1183, 1247, 1311, 1375, 1439, 1503]
+        y_coordinates = [471, 535, 599,91, 855, 919]
+        pxl_to_edg = 32 663, 727, 7
 
 
-for coors in number:
-    x = coors[0]
+        for coors in number:
+            x = coors[0]
 
-    if x < x_coordinates[0] + pxl_to_edg:
-        x = (1, x_coordinates[0])
-    elif x < x_coordinates[1] + pxl_to_edg:
-        x = (2, x_coordinates[1])
-    elif x < x_coordinates[2] + pxl_to_edg:
-        x = (3, x_coordinates[2])
-    elif x < x_coordinates[3] + pxl_to_edg:
-        x = (4, x_coordinates[3])
-    elif x < x_coordinates[4] + pxl_to_edg:
-        x = (5, x_coordinates[4])
-    elif x < x_coordinates[5] + pxl_to_edg:
-        x = (6, x_coordinates[5])
-    elif x < x_coordinates[6] + pxl_to_edg:
-        x = (7, x_coordinates[6])
-    else:
-        x = (8, x_coordinates[7])
+            if x < x_coordinates[0] + pxl_to_edg:
+                x = (1, x_coordinates[0])
+            elif x < x_coordinates[1] + pxl_to_edg:
+                x = (2, x_coordinates[1])
+            elif x < x_coordinates[2] + pxl_to_edg:
+                x = (3, x_coordinates[2])
+            elif x < x_coordinates[3] + pxl_to_edg:
+                x = (4, x_coordinates[3])
+            elif x < x_coordinates[4] + pxl_to_edg:
+                x = (5, x_coordinates[4])
+            elif x < x_coordinates[5] + pxl_to_edg:
+                x = (6, x_coordinates[5])
+            elif x < x_coordinates[6] + pxl_to_edg:
+                x = (7, x_coordinates[6])
+            else:
+                x = (8, x_coordinates[7])
 
-    y = coors[1]
+            y = coors[1]
 
-    if y < y_coordinates[0] + pxl_to_edg:
-        y = (1, y_coordinates[0])
-    elif y < y_coordinates[1] + pxl_to_edg:
-        y = (2, y_coordinates[1])
-    elif y < y_coordinates[2] + pxl_to_edg:
-        y = (3, y_coordinates[2])
-    elif y < y_coordinates[3] + pxl_to_edg:
-        y = (4, y_coordinates[3])
-    elif y < y_coordinates[4] + pxl_to_edg:
-        y = (5, y_coordinates[4]) 
-    elif y < y_coordinates[5] + pxl_to_edg:
-        y = (6, y_coordinates[5])
-    elif y < y_coordinates[6] + pxl_to_edg:
-        y = (7, y_coordinates[6])
-    else:
-        y = (8, y_coordinates[7])   
-    
-    print(x[0], y[0])
-    #box = Square(x[0], y[0], 1)
-    box = Square(x[0], y[0], 2) 
-    #box = Square(x[0], y[0], 3) 
+            if y < y_coordinates[0] + pxl_to_edg:
+                y = (1, y_coordinates[0])
+            elif y < y_coordinates[1] + pxl_to_edg:
+                y = (2, y_coordinates[1])
+            elif y < y_coordinates[2] + pxl_to_edg:
+                y = (3, y_coordinates[2])
+            elif y < y_coordinates[3] + pxl_to_edg:
+                y = (4, y_coordinates[3])
+            elif y < y_coordinates[4] + pxl_to_edg:
+                y = (5, y_coordinates[4]) 
+            elif y < y_coordinates[5] + pxl_to_edg:
+                y = (6, y_coordinates[5])
+            elif y < y_coordinates[6] + pxl_to_edg:
+                y = (7, y_coordinates[6])
+            else:
+                y = (8, y_coordinates[7])   
+            
+            if (tester.board[y[0] - 1][x[0] - 1]) == 'solved':
+                continue
+            else:
+                print(x[0], y[0])
 
-    tester.update_square(y[0] - 1, x[0] - 1, 2)
-    tester.set_neighbors(box.neighbors_coords, box)
-    #box.set_neighbor(tester.board)
-    #type = get_type(x[0], y[0])
-    tester.display_board()
+                if loop == 1:
+                    box = Square(x[0], y[0], 1)
+                    tester.update_square(y[0] - 1, x[0] - 1, 1)
+                elif loop == 2:
+                    box = Square(x[0], y[0], 2) 
+                    tester.update_square(y[0] - 1, x[0] - 1, 2)
+                elif loop == 3:
+                    box = Square(x[0], y[0], 3)
+                    tester.update_square(y[0] - 1, x[0] - 1, 3)
+                else:
+                    box = Square(x[0], y[0], 4)
+                    tester.update_square(y[0] - 1, x[0] - 1, 4)
+                tester.set_neighbors(box.neighbors_coords, box)
+                #tester.display_board()
+    check = screenshot(1265, 342)[0]
+    if check == 0:
+        print("Win")
+        sys.exit()
+    elif check == 59:
+        print("Lost :(")
+        sys.exit()
